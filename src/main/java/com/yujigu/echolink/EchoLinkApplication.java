@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.security.SecureRandom;
+import java.util.Objects;
 import java.util.UUID;
 
 public class EchoLinkApplication extends Application {
@@ -34,7 +35,7 @@ public class EchoLinkApplication extends Application {
     private Button toggleButton;
     private ImageView qrCodeImageView;
     private WebSocketClient client;
-    static ScheduledTaskPing scheduledTaskPing = new ScheduledTaskPing();
+    private ScheduledTaskPing scheduledTaskPing;;
 
     @Override
     public void start(Stage primaryStage) {
@@ -84,20 +85,24 @@ public class EchoLinkApplication extends Application {
     private void startGeneration() {
         toggleButton.setText("停止");
         textField.setDisable(true);
-        String text = textField.getText();
-        Image qrImage = generateQRCodeImage(text);
+        String secretKey = textField.getText();
+        Image qrImage = generateQRCodeImage(secretKey);
         if (qrImage != null) {
             qrCodeImageView.setImage(qrImage);
         }
         isRunning = true;
-        connectWebSocket(text);
+
+        //开启
+        startAction(secretKey);
     }
 
     private void stopGeneration() {
         toggleButton.setText("开启");
         textField.setDisable(false);
         isRunning = false;
-        Clipboard.destroy();
+
+        //停止
+        stopAction();
     }
 
     private String generateRandomKey(int length) {
@@ -128,38 +133,67 @@ public class EchoLinkApplication extends Application {
         return null;
     }
 
-    private void connectWebSocket(String secretKey) {
+    private void connectWebSocket(String secretKey, String deviceId) {
         try {
-            String deviceId = UUID.randomUUID().toString().replaceAll("-","");
             String ws = "ws://ocean.ibalbal.com/ocean-bitong-ws/websocket/" + secretKey + "/" + deviceId;
             System.out.println(ws);
             if (client == null){
                 client = new WebSocketClient(new URI(ws));
-                Clipboard.getInstance(new ClipboardListener(client, new Datas(deviceId, secretKey, DeviceType.WINDOWS)));
-                client.addMessageHandler(message -> {
-                    System.out.println("收到消息：" + message);
-                    Datas datas = JSONObject.parseObject(message, Datas.class);
-                    if (datas.getContent() == null || datas.getContent() == ""){
-//                    log.info("内容消息体为空不做处理");
-                        return;
-                    }
-                    Clipboard.setClipboard(datas.getContent());
-                });
             }
-
-            scheduledTaskPing.startScheduledTask(new ScheduledTaskPing.ScheduledTask() {
-                @Override
-                public void ping() {
-                    client.sendMessage("ping");
-                }
-            });
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private void stopWebSocket() {
+        scheduledTaskPing.stopScheduledTask();
+        client.close();
+        client = null;
+    }
+
+
+    //心跳
+    private void startPing(){
+        scheduledTaskPing.startScheduledTask(new ScheduledTaskPing.ScheduledTask() {
+            @Override
+            public void ping() {
+                client.sendMessage("ping");
+            }
+        });
+    }
+
+    private void startAction(String secretKey){
+        //生产随机设备id
+        String deviceId = UUID.randomUUID().toString().replaceAll("-","");
+
+        //创建webSocket链接
+        connectWebSocket(secretKey, deviceId);
+        //创建剪切板监听事件
+        Clipboard.getInstance(new ClipboardListener(client, new Datas(deviceId, secretKey, DeviceType.WINDOWS)));
+        //收到消息-设置剪切板中
+        client.addMessageHandler(message -> {
+            System.out.println("收到消息：" + message);
+            Datas datas = JSONObject.parseObject(message, Datas.class);
+            if (datas.getContent() == null || Objects.equals(datas.getContent(), "")){
+//                    log.info("内容消息体为空不做处理");
+                return;
+            }
+            //将数据设置到剪切板
+            Clipboard.setClipboard(datas.getContent());
+        });
+
+        scheduledTaskPing  = new ScheduledTaskPing();
+        startPing();
+    }
+
+
+
+    private void stopAction(){
+        stopWebSocket();
+        Clipboard.destroy();
+    }
+
     public static void main(String[] args) {
         launch();
-        scheduledTaskPing.stopScheduledTask();
     }
 }

@@ -52,6 +52,16 @@ public class WebSocketClient {
         }
     }
 
+    public void close() {
+        if (userSession != null && userSession.isOpen()) {
+            try {
+                userSession.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static interface MessageHandler {
         void handleMessage(String message);
     }

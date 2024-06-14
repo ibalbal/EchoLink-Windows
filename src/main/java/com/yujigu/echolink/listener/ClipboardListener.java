@@ -19,25 +19,9 @@ public class ClipboardListener implements WindowsClipboard.ClipboardListener{
 
     @Override
     public void onClipboardChange(String clipboardText) {
-        try {
-            // 对剪贴板文本进行Base64解码
-            String decodedText = base64Decode(clipboardText);
-            // 设置Datas对象的内容
-            datas.setContent(decodedText);
-            // 发送消息到WebSocket服务器
-            client.sendMessage(JSONObject.toJSONString(datas));
-            // 输出剪贴板文本（调试用）
-            System.out.println(clipboardText);
-        } catch (IllegalArgumentException e) {
-            // 捕获解码异常，处理异常情况
-            e.printStackTrace();
-        }
+        datas.setContent(clipboardText);
+        // 发送消息到WebSocket服务器
+        client.sendMessage(JSONObject.toJSONString(datas));
     }
 
-    public static String base64Decode(String input) {
-        // 对输入的Base64字符串进行解码
-        byte[] decodedBytes = Base64.getDecoder().decode(input.getBytes(StandardCharsets.UTF_8));
-        // 将解码后的字节数组转换为字符串返回
-        return new String(decodedBytes, StandardCharsets.UTF_8);
-    }
 }
