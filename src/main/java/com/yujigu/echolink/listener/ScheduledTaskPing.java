@@ -1,9 +1,12 @@
 package com.yujigu.echolink.listener;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class ScheduledTaskPing {
 
     private ScheduledExecutorService scheduler;
@@ -21,7 +24,7 @@ public class ScheduledTaskPing {
         // 初始延迟0秒，之后每隔60秒执行一次任务
         scheduler.scheduleAtFixedRate(() -> {
             // 这里写你需要执行的操作
-            System.out.println("ping");
+            log.info("ping");
             scheduledTask.ping();
         }, 0, 60, TimeUnit.SECONDS);
     }

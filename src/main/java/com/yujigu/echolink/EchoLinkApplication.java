@@ -18,6 +18,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
+import lombok.extern.slf4j.Slf4j;
+
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
@@ -28,6 +30,7 @@ import java.security.SecureRandom;
 import java.util.Objects;
 import java.util.UUID;
 
+@Slf4j
 public class EchoLinkApplication extends Application {
     private boolean isRunning = false;
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -45,8 +48,9 @@ public class EchoLinkApplication extends Application {
         qrCodeImageView = new ImageView();
 
         generateKeyButton.setOnAction(e -> {
+            //SBjXXAgTVrQUEK6qt3EQ
             String randomKey = generateRandomKey(32);
-            textField.setText("SBjXXAgTVrQUEK6qt3EQ");
+            textField.setText(randomKey);
         });
 
         toggleButton.setOnAction(e -> {
@@ -136,7 +140,7 @@ public class EchoLinkApplication extends Application {
     private void connectWebSocket(String secretKey, String deviceId) {
         try {
             String ws = "ws://ocean.ibalbal.com/ocean-bitong-ws/websocket/" + secretKey + "/" + deviceId;
-            System.out.println(ws);
+            log.info("链接地址：{}", ws);
             if (client == null){
                 client = new WebSocketClient(new URI(ws));
             }
@@ -154,12 +158,7 @@ public class EchoLinkApplication extends Application {
 
     //心跳
     private void startPing(){
-        scheduledTaskPing.startScheduledTask(new ScheduledTaskPing.ScheduledTask() {
-            @Override
-            public void ping() {
-                client.sendMessage("ping");
-            }
-        });
+        scheduledTaskPing.startScheduledTask(() -> client.sendMessage("ping"));
     }
 
     private void startAction(String secretKey){
@@ -172,10 +171,10 @@ public class EchoLinkApplication extends Application {
         Clipboard.getInstance(new ClipboardListener(client, new Datas(deviceId, secretKey, DeviceType.WINDOWS)));
         //收到消息-设置剪切板中
         client.addMessageHandler(message -> {
-            System.out.println("收到消息：" + message);
+            log.info("收到消息：{}" + message);
             Datas datas = JSONObject.parseObject(message, Datas.class);
             if (datas.getContent() == null || Objects.equals(datas.getContent(), "")){
-//                    log.info("内容消息体为空不做处理");
+                log.info("内容消息体为空不做处理");
                 return;
             }
             //将数据设置到剪切板

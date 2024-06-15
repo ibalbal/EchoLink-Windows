@@ -12,7 +12,8 @@ module com.yujigu.echolink {
     requires java.desktop;
     requires javax.websocket.api;
     requires com.alibaba.fastjson2;
+    requires org.slf4j;
     opens com.yujigu.echolink.listener to org.glassfish.tyrus.core;
-    opens com.yujigu.echolink to javafx.fxml, org.glassfish.tyrus.core;
+    opens com.yujigu.echolink to javafx.fxml, org.glassfish.tyrus.core, org.slf4j;
     exports com.yujigu.echolink;
 }

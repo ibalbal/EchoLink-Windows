@@ -1,9 +1,12 @@
 package com.yujigu.echolink;
 
+import lombok.extern.slf4j.Slf4j;
+
 import javax.websocket.*;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 
+@Slf4j
 @ClientEndpoint
 public class WebSocketClient {
     private Session userSession = null;
@@ -21,14 +24,14 @@ public class WebSocketClient {
 
     @OnOpen
     public void onOpen(Session userSession) {
-        System.out.println("Opening WebSocket connection");
+        log.info("Opening WebSocket connection");
         this.userSession = userSession;
         latch.countDown();
     }
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
-        System.out.println("Closing WebSocket connection");
+        log.info("Closing WebSocket connection");
         this.userSession = null;
     }
 
