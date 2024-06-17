@@ -158,7 +158,7 @@ public class EchoLinkApplication extends Application {
 
     //心跳
     private void startPing(){
-        scheduledTaskPing.startScheduledTask(() -> client.sendMessage("ping"));
+//        scheduledTaskPing.startScheduledTask(() -> client.sendMessage("ping"));
     }
 
     private void startAction(String secretKey){
@@ -171,7 +171,7 @@ public class EchoLinkApplication extends Application {
         Clipboard.getInstance(new ClipboardListener(client, new Datas(deviceId, secretKey, DeviceType.WINDOWS)));
         //收到消息-设置剪切板中
         client.addMessageHandler(message -> {
-            log.info("收到消息：{}" + message);
+            log.info("收到消息：{}" , message);
             Datas datas = JSONObject.parseObject(message, Datas.class);
             if (datas.getContent() == null || Objects.equals(datas.getContent(), "")){
                 log.info("内容消息体为空不做处理");
