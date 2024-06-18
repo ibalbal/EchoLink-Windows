@@ -16,4 +16,5 @@ module com.yujigu.echolink {
     opens com.yujigu.echolink.listener to org.glassfish.tyrus.core;
     opens com.yujigu.echolink to javafx.fxml, org.glassfish.tyrus.core, org.slf4j;
     exports com.yujigu.echolink;
+    opens com.yujigu.echolink.service to org.glassfish.tyrus.core;
 }

@@ -7,7 +7,6 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.symxns.sym.jni.windows.Clipboard.Clipboard;
 import com.yujigu.echolink.listener.ClipboardListener;
-import com.yujigu.echolink.listener.ScheduledTaskPing;
 import com.yujigu.echolink.model.DeviceType;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -38,7 +37,6 @@ public class EchoLinkApplication extends Application {
     private Button toggleButton;
     private ImageView qrCodeImageView;
     private WebSocketClient client;
-    private ScheduledTaskPing scheduledTaskPing;;
 
     @Override
     public void start(Stage primaryStage) {
@@ -140,8 +138,8 @@ public class EchoLinkApplication extends Application {
     private void connectWebSocket(String secretKey, String deviceId) {
         try {
             String ws = "ws://ocean.ibalbal.com/ocean-bitong-ws/websocket/" + secretKey + "/" + deviceId;
-            log.info("链接地址：{}", ws);
             if (client == null){
+                log.info("链接地址：{}", ws);
                 client = new WebSocketClient(new URI(ws));
             }
         } catch (Exception e) {
@@ -150,16 +148,13 @@ public class EchoLinkApplication extends Application {
     }
 
     private void stopWebSocket() {
-        scheduledTaskPing.stopScheduledTask();
-        client.close();
-        client = null;
+        if (client != null){
+            client.close();
+            client = null; // 将对象引用设为null
+            System.gc(); // 建议垃圾收集器运行
+        }
     }
 
-
-    //心跳
-    private void startPing(){
-//        scheduledTaskPing.startScheduledTask(() -> client.sendMessage("ping"));
-    }
 
     private void startAction(String secretKey){
         //生产随机设备id
@@ -180,19 +175,22 @@ public class EchoLinkApplication extends Application {
             //将数据设置到剪切板
             Clipboard.setClipboard(datas.getContent());
         });
-
-        scheduledTaskPing  = new ScheduledTaskPing();
-        startPing();
     }
-
-
 
     private void stopAction(){
         stopWebSocket();
-        Clipboard.destroy();
     }
 
     public static void main(String[] args) {
         launch();
+    }
+
+    @Override
+    public void stop() {
+        // 在应用程序退出时执行
+        log.info("Application is stopping");
+        // 例如保存数据或释放资源
+        stopWebSocket();
+        Clipboard.destroy();
     }
 }

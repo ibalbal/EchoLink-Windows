@@ -1,5 +1,7 @@
 package com.yujigu.echolink;
 
+import com.yujigu.echolink.service.ScheduledTaskPing;
+import com.yujigu.echolink.service.impl.ScheduledTaskPingImpl;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.websocket.*;
@@ -13,8 +15,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @ClientEndpoint
 public class WebSocketClient {
-    private Session userSession = null;
-    private MessageHandler messageHandler;
+    private static Session userSession;
+    private static MessageHandler messageHandler;
     private CountDownLatch latch = new CountDownLatch(1);
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private URI endpointURI;
@@ -38,20 +40,20 @@ public class WebSocketClient {
     @OnOpen
     public void onOpen(Session userSession) {
         log.info("Opening WebSocket connection");
-        this.userSession = userSession;
+        WebSocketClient.userSession = userSession;
         latch.countDown();
-        startHeartbeat();
+        startHeartbeat(scheduler);
     }
 
     @OnClose
     public void onClose(Session userSession, CloseReason reason) {
         log.info("Closing WebSocket connection: " + reason);
         try {
-            this.userSession.close();
+            WebSocketClient.userSession.close();
         } catch (IOException e) {
             log.error("Error closing WebSocket session", e);
         } finally {
-            this.userSession = null;
+            WebSocketClient.userSession = null;
             if (running) {
                 scheduleReconnect();
             }
@@ -60,8 +62,8 @@ public class WebSocketClient {
 
     @OnMessage
     public void onMessage(String message) {
-        if (this.messageHandler != null) {
-            this.messageHandler.handleMessage(message);
+        if (messageHandler != null) {
+            messageHandler.handleMessage(message);
         }
     }
 
@@ -70,14 +72,24 @@ public class WebSocketClient {
         log.error("WebSocket error", throwable);
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        log.info("WebSocketClient is being collected.");
+    }
+
     public void addMessageHandler(MessageHandler msgHandler) {
-        this.messageHandler = msgHandler;
+        messageHandler = msgHandler;
     }
 
     public void sendMessage(String message) {
         try {
+            if (WebSocketClient.userSession == null){
+                log.error("userSession is null");
+                return;
+            }
             latch.await();
-            this.userSession.getAsyncRemote().sendText(message);
+            WebSocketClient.userSession.getAsyncRemote().sendText(message);
         } catch (InterruptedException e) {
             log.error("Error sending message", e);
         }
@@ -85,28 +97,26 @@ public class WebSocketClient {
 
     public void close() {
         running = false;
-        if (userSession != null && userSession.isOpen()) {
+        if (WebSocketClient.userSession != null && WebSocketClient.userSession.isOpen()) {
             try {
-                userSession.close();
+                WebSocketClient.userSession.close();
             } catch (Exception e) {
                 log.error("Error closing WebSocket", e);
             }
         }
         scheduler.shutdown();
+
     }
 
     private void scheduleReconnect() {
         scheduler.schedule(this::connect, 5, TimeUnit.SECONDS);
     }
 
-    private void startHeartbeat() {
+    private void startHeartbeat(ScheduledExecutorService scheduler) {
         scheduler.scheduleAtFixedRate(() -> {
             if (userSession != null && userSession.isOpen()) {
-                try {
-                    userSession.getAsyncRemote().sendPing(null);
-                } catch (IOException e) {
-                    log.error("Error sending ping", e);
-                }
+                log.info("Sending ping");
+                ScheduledTaskPing.startScheduledTask(new ScheduledTaskPingImpl(), userSession);
             }
         }, 0, 30, TimeUnit.SECONDS);  // Send ping every 30 seconds
     }
