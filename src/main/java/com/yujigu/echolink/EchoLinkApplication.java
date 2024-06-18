@@ -7,6 +7,8 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.symxns.sym.jni.windows.Clipboard.Clipboard;
 import com.yujigu.echolink.listener.ClipboardListener;
+import com.yujigu.echolink.listener.WebSocketClient;
+import com.yujigu.echolink.model.Datas;
 import com.yujigu.echolink.model.DeviceType;
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -154,7 +156,6 @@ public class EchoLinkApplication extends Application {
             System.gc(); // 建议垃圾收集器运行
         }
     }
-
 
     private void startAction(String secretKey){
         //生产随机设备id

@@ -1,4 +1,4 @@
-package com.yujigu.echolink;
+package com.yujigu.echolink.model;
 
 import com.yujigu.echolink.model.DeviceType;
 import lombok.AllArgsConstructor;

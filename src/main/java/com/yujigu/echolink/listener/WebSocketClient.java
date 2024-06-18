@@ -1,4 +1,4 @@
-package com.yujigu.echolink;
+package com.yujigu.echolink.listener;
 
 import com.yujigu.echolink.service.ScheduledTaskPing;
 import com.yujigu.echolink.service.impl.ScheduledTaskPingImpl;
@@ -115,7 +115,6 @@ public class WebSocketClient {
     private void startHeartbeat(ScheduledExecutorService scheduler) {
         scheduler.scheduleAtFixedRate(() -> {
             if (userSession != null && userSession.isOpen()) {
-                log.info("Sending ping");
                 ScheduledTaskPing.startScheduledTask(new ScheduledTaskPingImpl(), userSession);
             }
         }, 0, 30, TimeUnit.SECONDS);  // Send ping every 30 seconds

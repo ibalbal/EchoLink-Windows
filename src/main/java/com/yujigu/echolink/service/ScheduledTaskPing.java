@@ -12,7 +12,6 @@ public class ScheduledTaskPing {
         void ping(Session userSession);
     }
 
-
     public static void startScheduledTask(ScheduledTask scheduledTask, Session userSession) {
         scheduledTask.ping(userSession);
     }

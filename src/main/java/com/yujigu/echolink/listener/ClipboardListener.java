@@ -1,8 +1,7 @@
 package com.yujigu.echolink.listener;
 import com.alibaba.fastjson2.JSONObject;
 import com.symxns.sym.jni.windows.Clipboard.WindowsClipboard;
-import com.yujigu.echolink.Datas;
-import com.yujigu.echolink.WebSocketClient;
+import com.yujigu.echolink.model.Datas;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
