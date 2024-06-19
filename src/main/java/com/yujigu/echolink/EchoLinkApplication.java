@@ -47,10 +47,11 @@ public class EchoLinkApplication extends Application {
     private WebSocketClient client;
     private TextField ivTextField;
     private TextField keyTextField;
+    private Button generateKeyButton;
     @Override
     public void start(Stage primaryStage) {
         textField = new TextField();
-        Button generateKeyButton = new Button("随机密钥");
+        generateKeyButton = new Button("随机密钥");
         toggleButton = new Button("开启");
         qrCodeImageView = new ImageView();
 
@@ -117,17 +118,48 @@ public class EchoLinkApplication extends Application {
     }
 
     private void startGeneration() {
+        if (textField.getText().isEmpty()){
+            log.info("请输入正确的密钥");
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("提示");
+            alert.setHeaderText(null);
+            alert.setContentText("请输入密钥 SecretKey !");
+            alert.showAndWait();
+            return;
+        }
+
+        if (ivTextField.getText().isEmpty() || keyTextField.getText().isEmpty()){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("提示");
+            alert.setHeaderText(null);
+            alert.setContentText("请输入key/iv!");
+            alert.showAndWait();
+            return;
+        }
+
+        if (ivTextField.getText().length() != 16){
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("提示");
+            alert.setHeaderText(null);
+            alert.setContentText("iv 位数应为16位!");
+            alert.showAndWait();
+            return;
+        }
+
+
         toggleButton.setText("停止");
         textField.setDisable(true);
         String secretKey = textField.getText();
+
+        //开启
+        startAction(secretKey);
+
         Image qrImage = generateQRCodeImage(secretKey);
         if (qrImage != null) {
             qrCodeImageView.setImage(qrImage);
         }
         isRunning = true;
 
-        //开启
-        startAction(secretKey);
     }
 
     private void stopGeneration() {
@@ -189,6 +221,8 @@ public class EchoLinkApplication extends Application {
 
     private void startAction(String secretKey){
 //        String iv = "1234567890123456";
+
+
         String iv = ivTextField.getText();
         String password = keyTextField.getText();
         IvParameterSpec ivParameterSpec = AES.generateIV(iv);
@@ -197,6 +231,7 @@ public class EchoLinkApplication extends Application {
         aes128Encryption.init(key, ivParameterSpec, new OFBMode());
         ivTextField.setDisable(true);
         keyTextField.setDisable(true);
+        generateKeyButton.setDefaultButton(true);
         //生产随机设备id
         String deviceId = UUID.randomUUID().toString().replaceAll("-","");
 
@@ -214,6 +249,7 @@ public class EchoLinkApplication extends Application {
     private void stopAction(){
         ivTextField.setDisable(false);
         keyTextField.setDisable(false);
+        generateKeyButton.setDefaultButton(false);
         stopWebSocket();
     }
 
