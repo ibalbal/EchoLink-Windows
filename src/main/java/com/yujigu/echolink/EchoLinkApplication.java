@@ -1,12 +1,17 @@
 package com.yujigu.echolink;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.symxns.sym.jni.windows.Clipboard.Clipboard;
+import com.yujigu.echolink.aes.AES;
+import com.yujigu.echolink.aes.AESMode;
+import com.yujigu.echolink.aes.Encryption;
+import com.yujigu.echolink.aes.impl.AESEncryption;
+import com.yujigu.echolink.aes.impl.OFBMode;
 import com.yujigu.echolink.listener.ClipboardListener;
+import com.yujigu.echolink.listener.ClipboardPreHandlerListener;
 import com.yujigu.echolink.listener.WebSocketClient;
 import com.yujigu.echolink.model.Datas;
 import com.yujigu.echolink.model.DeviceType;
@@ -22,13 +27,14 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.image.BufferedImage;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.security.SecureRandom;
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -50,7 +56,7 @@ public class EchoLinkApplication extends Application {
         generateKeyButton.setOnAction(e -> {
             //SBjXXAgTVrQUEK6qt3EQ
             String randomKey = generateRandomKey(32);
-            textField.setText(randomKey);
+            textField.setText("SBjXXAgTVrQUEK6qt3EQ");
         });
 
         toggleButton.setOnAction(e -> {
@@ -158,24 +164,24 @@ public class EchoLinkApplication extends Application {
     }
 
     private void startAction(String secretKey){
+        String iv = "1234567890123456";
+        IvParameterSpec ivParameterSpec = AES.generateIV(iv);
+        SecretKey key = AES.getSecretKey(AESMode.AES_128,"加密密码");
+        Encryption aes128Encryption = new AESEncryption();
+        aes128Encryption.init(key, ivParameterSpec, new OFBMode());
+
         //生产随机设备id
         String deviceId = UUID.randomUUID().toString().replaceAll("-","");
 
         //创建webSocket链接
         connectWebSocket(secretKey, deviceId);
         //创建剪切板监听事件
-        Clipboard.getInstance(new ClipboardListener(client, new Datas(deviceId, secretKey, DeviceType.WINDOWS)));
+        ClipboardPreHandlerListener clipboardPreHandlerListener = new ClipboardPreHandlerListener(aes128Encryption);
+        ClipboardListener clipboardListener = new ClipboardListener(client, clipboardPreHandlerListener, new Datas(deviceId, secretKey, DeviceType.WINDOWS));
+        Clipboard.getInstance(clipboardListener, clipboardPreHandlerListener);
         //收到消息-设置剪切板中
-        client.addMessageHandler(message -> {
-            log.info("收到消息：{}" , message);
-            Datas datas = JSONObject.parseObject(message, Datas.class);
-            if (datas.getContent() == null || Objects.equals(datas.getContent(), "")){
-                log.info("内容消息体为空不做处理");
-                return;
-            }
-            //将数据设置到剪切板
-            Clipboard.setClipboard(datas.getContent());
-        });
+        client.addMessageHandler(clipboardListener::handleMessage);
+
     }
 
     private void stopAction(){

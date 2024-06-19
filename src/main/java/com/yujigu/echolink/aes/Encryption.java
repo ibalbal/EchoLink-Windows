@@ -21,7 +21,7 @@ public abstract class Encryption {
         }
     }
 
-    protected abstract void init(SecretKey secretKey, IvParameterSpec iv, AESMode aesMode);
+    public abstract void init(SecretKey secretKey, IvParameterSpec iv, AESMode aesMode);
 
     /**
      * 加密
@@ -29,7 +29,7 @@ public abstract class Encryption {
      * @return
      * @throws Exception
      */
-    protected abstract String encrypt(String content) throws Exception;
+    public abstract String encrypt(String content);
 
     /**
      * 解密
@@ -37,7 +37,7 @@ public abstract class Encryption {
      * @return
      * @throws Exception
      */
-    protected abstract String decrypt(String content) throws Exception;
+    public abstract String decrypt(String content);
 
     public static void main(String[] args) throws Exception {
         String iv = "1234567890123456";

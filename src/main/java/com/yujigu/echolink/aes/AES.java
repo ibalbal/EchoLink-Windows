@@ -83,16 +83,20 @@ public abstract class AES {
      * @return
      * @throws Exception
      */
-    public static SecretKey getSecretKey(int type, String key) throws Exception {
-        KeyGenerator kgen = KeyGenerator.getInstance("AES");// 创建AES的Key生产者
-        //kgen.init(128, new SecureRandom(password.getBytes()));// 利用用户密码作为随机数初始化出
-        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-        secureRandom.setSeed(key.getBytes());
-        kgen.init(type, secureRandom);
+    public static SecretKey getSecretKey(int type, String key){
+        try {
+            KeyGenerator kgen = KeyGenerator.getInstance("AES");
+            //kgen.init(128, new SecureRandom(password.getBytes()));// 利用用户密码作为随机数初始化出
+            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+            secureRandom.setSeed(key.getBytes());
+            kgen.init(type, secureRandom);
 
-        SecretKey secretKey = kgen.generateKey();// 根据用户密码，生成一个密钥
-        printSecretKey(secretKey);
-        return secretKey;
+            SecretKey secretKey = kgen.generateKey();// 根据用户密码，生成一个密钥
+            printSecretKey(secretKey);
+            return secretKey;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void printSecretKey(SecretKey secretKey) {
