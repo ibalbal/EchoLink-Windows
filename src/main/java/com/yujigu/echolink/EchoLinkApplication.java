@@ -45,7 +45,8 @@ public class EchoLinkApplication extends Application {
     private Button toggleButton;
     private ImageView qrCodeImageView;
     private WebSocketClient client;
-
+    private TextField ivTextField;
+    private TextField keyTextField;
     @Override
     public void start(Stage primaryStage) {
         textField = new TextField();
@@ -72,13 +73,36 @@ public class EchoLinkApplication extends Application {
         toggleButton.setMaxWidth(300);
         textField.setMaxWidth(300);
 
+        // 添加Key和IV输入框
+        Label keyLabel = new Label("加密 Key:");
+        keyTextField = new TextField();
+        HBox keyBox = new HBox(10, keyLabel, keyTextField);
+        keyBox.setPadding(new Insets(2));
+        keyBox.setStyle("-fx-alignment: center;");
+
+        Label ivLabel = new Label("IV (16位):");
+        ivTextField = new TextField();
+        HBox ivBox = new HBox(10, ivLabel, ivTextField);
+        ivBox.setPadding(new Insets(2));
+        ivBox.setStyle("-fx-alignment: center;");
+
+        Label secretLabel = new Label("SecretKey:");
+        TextField secretTextField = new TextField();
+        HBox secretBox = new HBox(10, secretLabel, secretTextField);
+        secretBox.setPadding(new Insets(2));
+        secretBox.setStyle("-fx-alignment: center;");
+
         // 调整布局
-        HBox topLayout = new HBox(10, generateKeyButton, textField, toggleButton);
-        topLayout.setPadding(new Insets(10));
-        VBox rootLayout = new VBox(20, topLayout, qrCodeImageView);
+        HBox topLayout = new HBox(10,  secretLabel, textField);
+        topLayout.setPadding(new Insets(2));
+
+        HBox button = new HBox(10, generateKeyButton, toggleButton);
+        button.setPadding(new Insets(2));
+        button.setStyle("-fx-alignment: center;");
+
+        VBox rootLayout = new VBox(20, keyBox, ivBox, topLayout, button, qrCodeImageView);
         rootLayout.setStyle("-fx-padding: 20; -fx-alignment: center; -fx-background-color: #f0f0f0;");
         topLayout.setStyle("-fx-alignment: center;");
-
         textField.setStyle("-fx-font-size: 10pt");
         generateKeyButton.setStyle("-fx-font-size: 10pt");
         toggleButton.setStyle("-fx-font-size: 10pt");
@@ -86,7 +110,7 @@ public class EchoLinkApplication extends Application {
         qrCodeImageView.setFitWidth(300);
         qrCodeImageView.setFitHeight(300);
 
-        Scene scene = new Scene(rootLayout, 380, 400);
+        Scene scene = new Scene(rootLayout, 380, 520);
         primaryStage.setTitle("EchoLink");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -164,12 +188,15 @@ public class EchoLinkApplication extends Application {
     }
 
     private void startAction(String secretKey){
-        String iv = "1234567890123456";
+//        String iv = "1234567890123456";
+        String iv = ivTextField.getText();
+        String password = keyTextField.getText();
         IvParameterSpec ivParameterSpec = AES.generateIV(iv);
-        SecretKey key = AES.getSecretKey(AESMode.AES_128,"加密密码");
+        SecretKey key = AES.getSecretKey(AESMode.AES_128, password);
         Encryption aes128Encryption = new AESEncryption();
         aes128Encryption.init(key, ivParameterSpec, new OFBMode());
-
+        ivTextField.setDisable(true);
+        keyTextField.setDisable(true);
         //生产随机设备id
         String deviceId = UUID.randomUUID().toString().replaceAll("-","");
 
@@ -185,6 +212,8 @@ public class EchoLinkApplication extends Application {
     }
 
     private void stopAction(){
+        ivTextField.setDisable(false);
+        keyTextField.setDisable(false);
         stopWebSocket();
     }
 
