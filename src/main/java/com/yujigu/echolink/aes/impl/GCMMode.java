@@ -6,19 +6,23 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 @Slf4j
-public class OFBMode implements AESMode {
+public class GCMMode implements AESMode {
     @Override
     public Cipher cipher(SecretKey secretKey, int mode, IvParameterSpec iv) {
         Cipher cipher = null;
         try {
-            log.info("模式：OFB");
-            cipher = Cipher.getInstance("AES/OFB/PKCS5Padding");
-            cipher.init(mode, secretKey, iv);
+            log.info("模式：GCM");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            byte[] keyBytes = secretKey.getEncoded();
+            int keyLength = keyBytes.length * 8; // 字节数 * 8 = 位数
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(keyLength, iv.getIV());
+            cipher.init(mode, secretKey, gcmSpec);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         } catch (NoSuchPaddingException e) {
