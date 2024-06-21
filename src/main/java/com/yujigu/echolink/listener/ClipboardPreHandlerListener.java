@@ -1,7 +1,7 @@
 package com.yujigu.echolink.listener;
 
 import com.symxns.sym.jni.windows.Clipboard.HandlerListener;
-import com.yujigu.echolink.aes.Encryption;
+import com.symxns.sym.core.aes.Encryption;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

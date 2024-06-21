@@ -13,6 +13,7 @@ module com.yujigu.echolink {
     requires javax.websocket.api;
     requires com.alibaba.fastjson2;
     requires org.slf4j;
+    requires sym.system.core;
     exports com.yujigu.echolink;
     exports com.yujigu.echolink.model;
     exports com.yujigu.echolink.listener;
